@@ -314,19 +314,47 @@
     margin-top: -210px;
 }
 
-
-.tab-osd .checkbox {
+.tab-osd .elementselect {
+ background-color: #fff;
+    float: left;
     border-bottom: 1px solid #ccc;
+    width: calc(100% + 10px);
+    margin-left: -10px;
+    padding-left: 10px;
+ } 
+ 
+ 
+ .tab-osd .elementselect:hover {
+    background-color: #f3f3f3;
+ } 
+ 
+ 
+.tab-osd .elementselect.active {
+    background-color: #ffde84;
+ } 
+
+
+.tab-osd .elementselect:last-child {
+    border-bottom: 0px;
+    padding-bottom: 0px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+ }
+
+ 
+.tab-osd .checkbox {
     margin-top: 4px;
     float: left;
     width: 100%;
     padding-bottom: 5px;
+    padding-top: 1px;
 }
 
 .tab-osd .numberspacer {
     width: 25px;
     float: left;
    }
+   
 
 .tab-osd label {
     margin-top: -0px;
@@ -338,10 +366,6 @@
     margin-right:8px;
 }
 
-.tab-osd .checkbox:last-child {
-    border-bottom: 0px solid #ccc;
-    padding-bottom:10px;
- }
 
 .tab-osd .preview {
     width: 720px;
@@ -368,31 +392,40 @@
 
 
 .tab-osd .format {
-    background-color: #8e8e8e;
-    border: #8e8e8e;
-    padding-bottom: 7px;
-    width: 100%;
-    float:left;
+    width: calc(100% - 2px);
+    float: left;
 
 }
 
 .tab-osd .format .title {
     font-size: 13px;
-    height: 13px;
+    background-color: #8e8e8e;
     padding-top: 6px;
-    margin-left: 10px;
+    padding-bottom: 6px;
+    padding-left: 8px;
+    padding-right: 10px;
     float: left;
     font-weight: bold;
     color: white;
+    border-bottom-left-radius: 3px;
+    border-top-left-radius: 3px;
+    min-width: 85px;
 }
 
 .tab-osd .format select {
     border: 1px solid silver;
-    width: 80px;
+    width: 50px;
     float: right;
     margin-top: 7px;
     margin-right: 8px;
  }
+
+.tab-osd .osdlabel {
+    float: left;
+    margin-top: 7px;
+    margin-left: 8px;
+ }
+ 
 
 
 @media only screen and (max-width: 1055px) , only screen and (max-device-width: 1055px) {
