@@ -297,6 +297,10 @@
   background-size: cover;
 }
 
+.tab-osd .preview .row {
+  height: 18px;
+}
+
 .tab-osd .content_wrapper {
     height: calc(100% - 41px);
 }

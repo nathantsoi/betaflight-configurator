@@ -1,21 +1,20 @@
 'use strict';
 
 var SYM = SYM || {};
-
-SYM._sym_sizes = {
-  VOLT: 1,
-  RSSI: 1,
-  FLY_M: 1,
-  ON_M: 1,
-  THR: 2,
-  AH_CENTER_LINE: 1,
-  AH_CENTER_LINE_RIGHT: 1,
-  AH_CENTER: 1,
-  AH_BAR9_0: 10,
-  AH_DECORATION: 1,
-  AH_LEFT: 1,
-  AH_RIGHT: 1
-};
+SYM.VOLT = 0x00;
+SYM.THR = 0x01;
+SYM.THR1 = 0x02;
+SYM.RSSI = 0x03;
+SYM.FLY_M = 0x9C;
+SYM.ON_M = 0x9B;
+SYM.AH_CENTER_LINE = 0x26;
+SYM.AH_CENTER_LINE_RIGHT = 0xBC;
+SYM.AH_CENTER = 0x7E;
+SYM.AH_BAR9_0 = 0x80;
+SYM.AH_DECORATION = 0x13;
+SYM.AH_LEFT = 0x03;
+SYM.AH_RIGHT = 0x02;
+SYM.LOGO = 0xA0;
 
 var FONT = FONT || {};
 
@@ -181,9 +180,10 @@ FONT.upload = function($progress) {
 
 FONT.preview = function($el) {
   $el.empty()
-  FONT.data.character_image_urls.map(function(url) {
-    $el.append('<img src='+url+'></img>');
-  });
+  for (var i = 0; i < FONT.data.character_image_urls.length; i++) {
+    var url = FONT.data.character_image_urls[i];
+    $el.append('<img src="'+url+'" title="0x'+i.toString(16)+'"></img>');
+  }
 };
 
 FONT.symbol = function(hexVal) {
