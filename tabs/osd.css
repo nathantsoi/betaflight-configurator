@@ -300,20 +300,162 @@
 .tab-osd .content_wrapper {
     height: calc(100% - 41px);
 }
-	
+
 #fontmanagercontent button {
     padding: 4px 10px !important;
     font-family: 'open_sanssemibold', Arial;
     font-size: 9pt !important;
     cursor: pointer;	
-	}
-	
+}
+
 #fontmanagercontent .fontbuttons {
     text-align: right;
     float: right;
     margin-top: -210px;
 }
-	
+
+.tab-osd .elementselect {
+ background-color: #fff;
+    float: left;
+    border-bottom: 1px solid #ccc;
+    width: calc(100% + 10px);
+    margin-left: -10px;
+    padding-left: 10px;
+ } 
+ 
+ 
+ .tab-osd .elementselect:hover {
+    background-color: #f3f3f3;
+ } 
+ 
+ 
+.tab-osd .elementselect.active {
+    background-color: #ffde84;
+ } 
+
+
+.tab-osd .elementselect:last-child {
+    border-bottom: 0px;
+    padding-bottom: 0px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+ }
+
+ 
+.tab-osd .checkbox {
+    margin-top: 4px;
+    float: left;
+    width: 100%;
+    padding-bottom: 5px;
+    padding-top: 1px;
+}
+
+.tab-osd .numberspacer {
+    width: 25px;
+    float: left;
+   }
+   
+
+.tab-osd label {
+    margin-top: -0px;
+    float: left;
+}
+
+.tab-osd input {
+    float:left;
+    margin-right:8px;
+}
+
+
+.tab-osd .preview {
+    width: 360px;
+}
+
+.tab-osd .osd_canvas {
+    width: 360px;
+    height: 234px;
+    background-image: url(/images/osdpreview.jpg);
+    background-repeat: no-repeat;
+    float:left;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    background-size: 360px;
+}
+
+.tab-osd .image {
+    margin-bottom: 0px;
+}
+
+
+.tab-osd .elements {
+    max-width: calc(100% - 360px);
+}
+
+
+.tab-osd .format {
+    width: calc(100% - 2px);
+    float: left;
+
+}
+
+.tab-osd .format .title {
+    font-size: 13px;
+    background-color: #8e8e8e;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 8px;
+    padding-right: 10px;
+    float: left;
+    font-weight: bold;
+    color: white;
+    border-bottom-left-radius: 3px;
+    border-top-left-radius: 3px;
+    min-width: 85px;
+}
+
+.tab-osd .format select {
+    border: 1px solid silver;
+    width: 50px;
+    float: right;
+    margin-top: 7px;
+    margin-right: 8px;
+ }
+
+.tab-osd .osdlabel {
+    float: left;
+    margin-top: 7px;
+    margin-left: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid silver;
+    width: calc(100% - 20px);
+ }
+ 
+ 
+ .tab-osd .osdlabel:last-child {
+    border-bottom: 0px;
+    margin-bottom: 5px;
+ }
+ 
+ 
+ .tab-osd .callsign {
+     border: 1px solid silver;
+     border-radius: 3px;
+     height: 12px;
+     float: left;
+     margin-left: 8px;
+     margin-top: 5px;
+     padding:3px;
+     width: calc(100% - 128px);
+ }
+ 
+ .tab-osd .osdlabel select {
+    float:right; 
+    margin-right:0px; 
+    width:50px;
+    border: 1px solid silver;
+}
+
+
 @media only screen and (max-width: 1055px) , only screen and (max-device-width: 1055px) {
   .tab-osd .content_wrapper {
       height: calc(100% - 30px);
