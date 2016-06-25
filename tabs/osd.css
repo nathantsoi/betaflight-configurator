@@ -368,17 +368,18 @@
 
 
 .tab-osd .preview {
-    width: 720px;
+    width: 360px;
 }
 
 .tab-osd .osd_canvas {
-    width: 720px;
-    height: 480px;
+    width: 360px;
+    height: 234px;
     background-image: url(/images/osdpreview.jpg);
     background-repeat: no-repeat;
     float:left;
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px;
+    background-size: 360px;
 }
 
 .tab-osd .image {
@@ -387,7 +388,7 @@
 
 
 .tab-osd .elements {
-    max-width: calc(100% - 720px);
+    max-width: calc(100% - 360px);
 }
 
 
@@ -424,8 +425,35 @@
     float: left;
     margin-top: 7px;
     margin-left: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid silver;
+    width: calc(100% - 20px);
  }
  
+ 
+ .tab-osd .osdlabel:last-child {
+    border-bottom: 0px;
+    margin-bottom: 5px;
+ }
+ 
+ 
+ .tab-osd .callsign {
+     border: 1px solid silver;
+     border-radius: 3px;
+     height: 12px;
+     float: left;
+     margin-left: 8px;
+     margin-top: 5px;
+     padding:3px;
+     width: calc(100% - 128px);
+ }
+ 
+ .tab-osd .osdlabel select {
+    float:right; 
+    margin-right:0px; 
+    width:50px;
+    border: 1px solid silver;
+}
 
 
 @media only screen and (max-width: 1055px) , only screen and (max-device-width: 1055px) {
