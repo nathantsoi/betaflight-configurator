@@ -52,6 +52,8 @@ var MSP_codes = {
     MSP_SET_FILTER_CONFIG:      93,
     MSP_ADVANCED_TUNING:        94,
     MSP_SET_ADVANCED_TUNING:    95,
+    MSP_SENSOR_CONFIG:          96,
+    MSP_SET_SENSOR_CONFIG:      97,
     MSP_SPECIAL_PARAMETERS:     98,
     MSP_SET_SPECIAL_PARAMETERS: 99,
 
@@ -922,6 +924,12 @@ var MSP = {
                     SPECIAL_PARAMETERS.escDesyncProtection = data.getUint16(offset, 1);
                 }
                 break;
+            case MSP_codes.MSP_SENSOR_CONFIG:
+                var offset = 0;
+                SENSOR_CONFIG.acc_hardware = data.getUint8(offset++, 1);
+                SENSOR_CONFIG.baro_hardware = data.getUint8(offset++, 1);
+                SENSOR_CONFIG.mag_hardware = data.getUint8(offset, 1);
+                break;
             case MSP_codes.MSP_LED_STRIP_CONFIG:
                 LED_STRIP = [];
                 
@@ -1469,10 +1477,15 @@ MSP.crunch = function (code) {
         case MSP_codes.MSP_SET_SPECIAL_PARAMETERS:
             buffer.push(Math.round(SPECIAL_PARAMETERS.RC_RATE_YAW * 100));
             if (CONFIG.flightControllerIdentifier == "BTFL" && semver.gte(CONFIG.flightControllerVersion, "2.8.2")) {
-                buffer.push(SPECIAL_PARAMETERS.airModeActivateThreshold);
+                buffer.push16(SPECIAL_PARAMETERS.airModeActivateThreshold);
                 buffer.push(SPECIAL_PARAMETERS.rcSmoothInterval);
-                buffer.push(SPECIAL_PARAMETERS.escDesyncProtection);
+                buffer.push16(SPECIAL_PARAMETERS.escDesyncProtection);
             }
+            break;
+        case MSP_codes.MSP_SET_SENSOR_CONFIG:
+            buffer.push(SENSOR_CONFIG.acc_hardware);
+            buffer.push(SENSOR_CONFIG.baro_hardware);
+            buffer.push(SENSOR_CONFIG.mag_hardware);
             break;
         default:
             return false;
