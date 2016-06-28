@@ -293,7 +293,8 @@ OSD.updateDisplaySize = function() {
   // compute the size
   OSD.data.display_size = {
     x: 30,
-    y: OSD.constants.VIDEO_LINES[video_type]
+    y: OSD.constants.VIDEO_LINES[video_type],
+    total: null
   };
 };
 
@@ -330,6 +331,36 @@ OSD.msp = {
     }
     OSD.updateDisplaySize();
   }
+};
+
+OSD.GUI = {};
+OSD.GUI.preview = {
+  onDragStart: function(e) {
+    var ev = e.originalEvent;
+    ev.dataTransfer.setData("text/plain", ev.target.id);
+    ev.dataTransfer.setDragImage($(this).data('field').preview_img, 6, 9);
+  },
+  onDragOver: function(e) {
+    var ev = e.originalEvent;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move"
+    $(this).css({
+      background: 'rgba(0,0,0,.5)'
+    });
+  },
+  onDragLeave: function(e) {
+    // brute force unstyling on drag leave
+    $(this).removeAttr('style');
+  },
+  onDrop: function(e) {
+    var ev = e.originalEvent;
+    var position = $(this).removeAttr('style').data('position');
+    if (position > OSD.data.display_size.total/2) {
+      position = position - OSD.data.display_size.total;
+    }
+    var field_id = parseInt(ev.dataTransfer.getData('text').split('field-')[1])
+    $('input.'+field_id+'.position').val(position).change();
+  },
 };
 
 
@@ -406,7 +437,7 @@ TABS.osd.initialize = function (callback) {
               $field.append('<label for="'+field.name+'">'+field.name+'</label>');
               if (field.positionable && field.position != -1) {
                 $field.append(
-                  $('<input type="number" class="'+field.name+' position"></input>')
+                  $('<input type="number" class="'+field.index+' position"></input>')
                   .data('field', field)
                   .val(field.position)
                   .change($.debounce(250, function(e) {
@@ -424,31 +455,59 @@ TABS.osd.initialize = function (callback) {
             }
             // buffer the preview
             OSD.data.preview = [];
-            // empty the screen buffer
-            var screen_size = OSD.data.display_size.x * OSD.data.display_size.y;
-            for(var i = 0; i < screen_size; i++) {
-              OSD.data.preview.push(' '.charCodeAt(0));
+            OSD.data.display_size.total = OSD.data.display_size.x * OSD.data.display_size.y;
+            // clear the buffer
+            for(var i = 0; i < OSD.data.display_size.total; i++) {
+              OSD.data.preview.push([null, ' '.charCodeAt(0)]);
             }
-            // draw all the displayed items
+            // draw all the displayed items and the drag and drop preview images
             for(let field of OSD.data.display_items) {
               if (!field.preview || field.position == -1) { continue; }
-              var j = (field.position >= 0) ? field.position : field.position + screen_size;
+              var j = (field.position >= 0) ? field.position : field.position + OSD.data.display_size.total;
+              // create the preview image
+              field.preview_img = new Image();
+              var canvas = document.createElement('canvas');
+              var ctx = canvas.getContext("2d");
+              // fill the screen buffer
               for(var i = 0; i < field.preview.length; i++) {
-                OSD.data.preview[j++] = field.preview.charCodeAt(i);
+                var charCode = field.preview.charCodeAt(i);
+                OSD.data.preview[j++] = [field, charCode];
+                // draw the preview
+                var img = new Image();
+                img.src = FONT.draw(charCode);
+                ctx.drawImage(img, i*12, 0);
               }
+              field.preview_img.src = canvas.toDataURL('image/png');
             }
             // logo
             var x = 160;
             for (var i = 1; i < 5; i++) {
               for (var j = 3; j < 27; j++)
-                  OSD.data.preview[i * 30 + j] = x++;
+                  OSD.data.preview[i * 30 + j] = [{name: 'LOGO', positionable: false}, x++];
             }
+            // TODO: artificial horizon
+
             // render
             var $preview = $('.display-layout .preview').empty();
             var $row = $('<div class="row"/>');
-            for(var i = 0; i < screen_size;) {
-              var charCode = OSD.data.preview[i];
-              $row.append('<img src='+FONT.draw(charCode)+'></img>');
+            for(var i = 0; i < OSD.data.display_size.total;) {
+              var field = OSD.data.preview[i][0];
+              var charCode = OSD.data.preview[i][1];
+              var $img = $('<div class="char"><img src='+FONT.draw(charCode)+'></img></div>')
+                .on('dragover', OSD.GUI.preview.onDragOver)
+                .on('dragleave', OSD.GUI.preview.onDragLeave)
+                .on('drop', OSD.GUI.preview.onDrop)
+                .data('position', i);
+              if (field && field.positionable) {
+                $img
+                  .attr('id', 'field-'+field.index)
+                  .data('field', field)
+                  .prop('draggable', true)
+                  .on('dragstart', OSD.GUI.preview.onDragStart);
+              }
+              else {
+              }
+              $row.append($img);
               if (++i % OSD.data.display_size.x == 0) {
                 $preview.append($row);
                 $row = $('<div class="row"/>');

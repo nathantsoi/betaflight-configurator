@@ -297,6 +297,16 @@
   background-size: cover;
 }
 
+.tab-osd .preview .char {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.tab-osd .preview .char[draggable="true"] {
+  cursor: move;
+}
+
 .tab-osd .preview .row {
   height: 18px;
 }
