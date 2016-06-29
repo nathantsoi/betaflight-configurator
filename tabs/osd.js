@@ -2,9 +2,11 @@
 
 var SYM = SYM || {};
 SYM.VOLT = 0x00;
-SYM.THR = 0x01;
-SYM.THR1 = 0x02;
-SYM.RSSI = 0x03;
+SYM.RSSI = 0x01;
+SYM.AH_RIGHT = 0x02;
+SYM.AH_LEFT = 0x03;
+SYM.THR = 0x04;
+SYM.THR1 = 0x05;
 SYM.FLY_M = 0x9C;
 SYM.ON_M = 0x9B;
 SYM.AH_CENTER_LINE = 0x26;
@@ -12,8 +14,6 @@ SYM.AH_CENTER_LINE_RIGHT = 0xBC;
 SYM.AH_CENTER = 0x7E;
 SYM.AH_BAR9_0 = 0x80;
 SYM.AH_DECORATION = 0x13;
-SYM.AH_LEFT = 0x03;
-SYM.AH_RIGHT = 0x02;
 SYM.LOGO = 0xA0;
 
 var FONT = FONT || {};
@@ -41,7 +41,8 @@ FONT.constants = {
     /** NVM ram field size for one font char, last 10 bytes dont matter **/
     MAX_NVM_FONT_CHAR_FIELD_SIZE: 64,
     CHAR_HEIGHT: 18,
-    CHAR_WIDTH: 12
+    CHAR_WIDTH: 12,
+    LINE: 30
   },
   COLORS: {
     // black
@@ -217,6 +218,8 @@ OSD.constants = {
     PAL: 480,
     NTSC: 390
   },
+  AHISIDEBARWIDTHPOSITION: 7,
+  AHISIDEBARHEIGHTPOSITION: 3,
   // order matters, so these are going in an array... pry could iterate the example map instead
   DISPLAY_FIELDS: [
     {
@@ -485,14 +488,37 @@ TABS.osd.initialize = function (callback) {
               for (var j = 3; j < 27; j++)
                   OSD.data.preview[i * 30 + j] = [{name: 'LOGO', positionable: false}, x++];
             }
-            // TODO: artificial horizon
-
+            var centerishPosition = 194;
+            // artificial horizon
+            if ($('input[name="ARTIFICIAL_HORIZON"]').prop('checked')) {
+              for (var i = 0; i < 9; i++) {
+                OSD.data.preview[centerishPosition - 4 + i] = SYM.AH_BAR9_0 + 4;
+              }
+              OSD.data.preview[centerishPosition - 1] = SYM.AH_CENTER_LINE;
+              OSD.data.preview[centerishPosition + 1] = SYM.AH_CENTER_LINE_RIGHT;
+              OSD.data.preview[centerishPosition]     = SYM.AH_CENTER;
+            }
+            // sidebars
+            if ($('input[name="HORIZON_SIDEBARS"]').prop('checked')) {
+              var hudwidth  = OSD.constants.AHISIDEBARWIDTHPOSITION;
+              var hudheight = OSD.constants.AHISIDEBARHEIGHTPOSITION;
+              for (var i = -hudheight; i <= hudheight; i++) {
+                OSD.data.preview[centerishPosition - hudwidth + (i * FONT.constants.SIZES.LINE)] = SYM.AH_DECORATION;
+                OSD.data.preview[centerishPosition + hudwidth + (i * FONT.constants.SIZES.LINE)] = SYM.AH_DECORATION;
+              }
+              // AH level indicators
+              OSD.data.preview[centerishPosition-hudwidth+1] =  SYM.AH_LEFT;
+              OSD.data.preview[centerishPosition+hudwidth-1] =  SYM.AH_RIGHT;
+            }
             // render
             var $preview = $('.display-layout .preview').empty();
             var $row = $('<div class="row"/>');
             for(var i = 0; i < OSD.data.display_size.total;) {
-              var field = OSD.data.preview[i][0];
-              var charCode = OSD.data.preview[i][1];
+              var charCode = OSD.data.preview[i];
+              if (typeof charCode === 'object') {
+                var field = OSD.data.preview[i][0];
+                var charCode = OSD.data.preview[i][1];
+              }
               var $img = $('<div class="char"><img src='+FONT.draw(charCode)+'></img></div>')
                 .on('dragover', OSD.GUI.preview.onDragOver)
                 .on('dragleave', OSD.GUI.preview.onDragLeave)
