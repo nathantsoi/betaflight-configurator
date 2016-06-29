@@ -181,7 +181,7 @@ FONT.upload = function($progress) {
 
 FONT.preview = function($el) {
   $el.empty()
-  for (var i = 0; i < FONT.data.character_image_urls.length; i++) {
+  for (var i = 0; i < SYM.LOGO; i++) {
     var url = FONT.data.character_image_urls[i];
     $el.append('<img src="'+url+'" title="0x'+i.toString(16)+'"></img>');
   }
@@ -385,10 +385,10 @@ TABS.osd.initialize = function (callback) {
           MSP.promise(MSP_codes.MSP_OSD_CONFIG)
           .then(function(info) {
             if (!info.length) {
-              $('.tab-osd .unsupported').fadeIn();;
+              $('.unsupported').fadeIn();
               return;
             }
-            $('.tab-osd .supported').fadeIn();;
+            $('.supported').fadeIn();
             OSD.msp.decode(info);
             // video mode
             var $videoTypes = $('.video-types').empty();
@@ -542,7 +542,7 @@ TABS.osd.initialize = function (callback) {
           });
         };
 
-        $('.display-layout .save').click(function() {
+        $('button.save').click(function() {
           var self = this;
           MSP.promise(MSP_codes.MSP_EEPROM_WRITE);
           var oldText = $(this).text();
@@ -558,8 +558,9 @@ TABS.osd.initialize = function (callback) {
         //  init structs once, also clears current font
         FONT.initData();
 
-        var $fontPicker = $('.font-picker button');
+        var $fontPicker = $('.fontbuttons button');
         $fontPicker.click(function(e) {
+          if (!$(this).data('font-file')) { return; }
           $fontPicker.removeClass('active');
           $(this).addClass('active');
           $.get('/resources/osd/' + $(this).data('font-file') + '.mcm', function(data) {
@@ -572,17 +573,7 @@ TABS.osd.initialize = function (callback) {
         // load the first font when we change tabs
         $fontPicker.first().click();
 
-        // UI Hooks
-        $('#fontmanager').jBox('Modal', {
-            width: 600,
-            height: 290,
-            closeButton: 'title',
-            animation: false,
-            title: 'OSD Font Manager',
-            content: $('#fontmanagercontent')
-        });
-
-        $('a.load_font_file').click(function() {
+        $('button.load_font_file').click(function() {
           $fontPicker.removeClass('active');
           FONT.openFontFile().then(function() {
             FONT.preview($preview);
@@ -591,7 +582,7 @@ TABS.osd.initialize = function (callback) {
         });
 
         // font upload
-        $('a.flash_font').click(function () {
+        $('button.flash_font').click(function () {
             if (!GUI.connect_lock) { // button disabled while flashing is in progress
                 $('.progressLabel').text('Uploading...');
                 FONT.upload($('.progress').val(0)).then(function() {

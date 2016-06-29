@@ -30,52 +30,52 @@
     width: 100%;
 }
 
-#fontmanagercontent .info .progressLabel a {
+.info .progressLabel a {
     color: white;
 }
 
-#fontmanagercontent .info .progressLabel a:hover {
+.info .progressLabel a:hover {
     text-decoration: underline;
 }
 
-#fontmanagercontent .info .progress {
+.info .progress {
     width: 100%;
     height: 26px;
     border-radius: 5px;
     border: 1px solid silver;
 }
 
-#fontmanagercontent .info .progress {
+.info .progress {
     -webkit-appearance: none;
 }
 
-#fontmanagercontent .info .progress::-webkit-progress-bar {
+.info .progress::-webkit-progress-bar {
     background-color: #4f4f4f;
     border-radius: 4px;
     box-shadow: inset 0px 0px 5px #2f2f2f;
 }
 
-#fontmanagercontent .info .progress::-webkit-progress-value {
+.info .progress::-webkit-progress-value {
     background-color: #F86008;
     border-radius: 4px;
 }
 
-#fontmanagercontent .info .progress.valid::-webkit-progress-bar {
+.info .progress.valid::-webkit-progress-bar {
     background-color: #56ac1d;
     border-radius: 4px;
 }
 
-#fontmanagercontent .info .progress.valid::-webkit-progress-value {
+.info .progress.valid::-webkit-progress-value {
     background-color: #56ac1d;
     border-radius: 4px;
 }
 
-#fontmanagercontent .info .progress.invalid::-webkit-progress-bar {
+.info .progress.invalid::-webkit-progress-bar {
     background-color: #A62E32;
     border-radius: 4px;
 }
 
-#fontmanagercontent .info .progress.invalid::-webkit-progress-value {
+.info .progress.invalid::-webkit-progress-value {
     background-color: #A62E32;
     border-radius: 4px;
 }
@@ -314,18 +314,27 @@
 .tab-osd .content_wrapper {
     height: calc(100% - 41px);
 }
+
+.tab-osd .content_toolbar {
+  text-align: right;
+}
+
+.tab-osd .content_toolbar button {
+  margin-right: 1em;
+}
 	
-#fontmanagercontent button {
+button {
     padding: 4px 10px !important;
     font-family: 'open_sanssemibold', Arial;
     font-size: 9pt !important;
     cursor: pointer;	
 	}
 	
-#fontmanagercontent .fontbuttons {
-    text-align: right;
-    float: right;
-    margin-top: -210px;
+.fontbuttons {
+    display: inline-block;
+    position: absolute;
+    right: 1em;
+    top: 1em;
 }
 	
 @media only screen and (max-width: 1055px) , only screen and (max-device-width: 1055px) {
