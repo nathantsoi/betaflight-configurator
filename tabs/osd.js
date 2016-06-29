@@ -413,13 +413,12 @@ TABS.osd.initialize = function (callback) {
             var $displayFields = $('.display-fields').empty();
             for (let field of OSD.data.display_items) {
               var checked = (-1 != field.position) ? 'checked' : '';
-              //$displayFields.append('<input type="checkbox" data-field-index="'+field.index+'" '+checked+'>'+field.name+'</input>');
               var $field = $('<div class="display-field"/>');
               $field.append(
-                $('<input type="checkbox" name="'+field.name+'"></input>')
+                $('<input type="checkbox" name="'+field.name+'" class="togglesmall"></input>')
                 .data('field', field)
                 .attr('checked', field.position != -1)
-                .click(function(e) {
+                .change(function(e) {
                   var field = $(this).data('field');
                   var $position = $(this).parent().find('.position.'+field.name);
                   if (field.position == -1) {
@@ -456,6 +455,7 @@ TABS.osd.initialize = function (callback) {
               }
               $displayFields.append($field);
             }
+            GUI.switchery();
             // buffer the preview
             OSD.data.preview = [];
             OSD.data.display_size.total = OSD.data.display_size.x * OSD.data.display_size.y;
