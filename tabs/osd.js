@@ -214,6 +214,7 @@ OSD.initData = function() {
 OSD.initData();
 
 OSD.constants = {
+  VISIBLE: 0x0800,
   VIDEO_TYPES: [
     'AUTO',
     'PAL',
@@ -410,13 +411,50 @@ OSD.updateDisplaySize = function() {
   }
   // compute the size
   OSD.data.display_size = {
-    x: 30,
+    x: FONT.constants.SIZES.LINE,
     y: OSD.constants.VIDEO_LINES[video_type],
     total: null
   };
 };
 
+
 OSD.msp = {
+  /**
+   * Note, unsigned 16 bit int for position ispacked:
+   * 0: unused
+   * v: visible flag
+   * b: blink flag
+   * y: y coordinate
+   * x: x coordinate
+   * 0000 vbyy yyyx xxxx
+   */
+  helpers: {
+    unpack: {
+      position: function(bits, c) {
+        var display_item = {};
+        if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
+          // size * y + x
+          display_item.position = FONT.constants.SIZES.LINE * ((bits >> 5) & 0x001F) + (bits & 0x001F);
+          display_item.isVisible = (bits & OSD.constants.VISIBLE);
+        } else {
+          display_item.position = (bits === -1) ? c.default_position : bits;
+          display_item.isVisible = bits !== -1;
+        }
+        return display_item;
+      }
+    },
+    pack: {
+      position: function(display_item) {
+        var isVisible = display_item.isVisible;
+        var position = display_item.position;
+        if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
+          return (isVisible ? 0x0800 : 0) & (((position / FONT.constants.SIZES.LINE) & 0x001F) << 5) & (position % FONT.constants.SIZES.LINE);
+        } else {
+          return isVisible ? position : -1;
+        }
+      }
+    }
+  },
   encodeOther: function() {
     var result = [-1, OSD.data.video_system];
     if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
@@ -425,11 +463,10 @@ OSD.msp = {
     return result;
   },
   encode: function(display_item) {
-    return [
-      display_item.index,
-      specificByte(display_item.position, 0),
-      specificByte(display_item.position, 1)
-    ];
+    var buffer = [];
+    buffer.push8(display_item.index);
+    buffer.push16(this.helpers.pack.position(display_item));
+    return buffer;
   },
   // Currently only parses MSP_MAX_OSD responses, add a switch on payload.code if more codes are handled
   decode: function(payload) {
@@ -445,21 +482,21 @@ OSD.msp = {
       d.alarms.push({name: 'rssi', display_name: 'Rssi', value: view.readU8()});
       d.alarms.push({name: 'cap', display_name: 'Capacity', value: view.readU16()});
       d.alarms.push({name: 'time', display_name: 'Minutes', value: view.readU16()});
+      d.alarms.push({name: 'alt', display_name: 'Altitude', value: view.readU16()});
       i += 6;
     }
     d.display_items = [];
     // start at the offset from the other fields
     for (; i < view.byteLength; i = i + 2) {
-      var v = view.readU16()
+      var v = view.read16();
       var j = d.display_items.length;
       var c = OSD.constants.DISPLAY_FIELDS[j];
-      d.display_items.push({
+      d.display_items.push($.extend({
         name: c.name,
         index: j,
-        position: v,
         positionable: c.positionable,
         preview: typeof(c.preview) === 'function' ? c.preview(d) : c.preview
-      });
+      }, this.helpers.unpack.position(v, c)));
     }
     OSD.updateDisplaySize();
   }
@@ -608,23 +645,20 @@ TABS.osd.initialize = function (callback) {
               // versioning related, if the field doesn't exist at the current flight controller version, just skip it
               if (!field.name) { continue; }
 
-              var checked = (-1 != field.position) ? 'checked' : '';
+              var checked = field.isVisible ? 'checked' : '';
               var $field = $('<div class="display-field"/>');
               $field.append(
                 $('<input type="checkbox" name="'+field.name+'" class="togglesmall"></input>')
                 .data('field', field)
-                .attr('checked', field.position != -1)
+                .attr('checked', field.isVisible)
                 .change(function(e) {
                   var field = $(this).data('field');
                   var $position = $(this).parent().find('.position.'+field.name);
-                  if (field.position == -1) {
+                  field.isVisible = !field.isVisible;
+                  if (field.isVisible) {
                     $position.show();
-                    field.position = OSD.data.last_positions[field.name]
-                  }
-                  else {
+                  } else {
                     $position.hide();
-                    OSD.data.last_positions[field.name] = field.position
-                    field.position = -1
                   }
                   MSP.promise(MSPCodes.MSP_SET_OSD_CONFIG, OSD.msp.encode(field))
                   .then(function() {
@@ -633,7 +667,7 @@ TABS.osd.initialize = function (callback) {
                 })
               );
               $field.append('<label for="'+field.name+'">'+inflection.titleize(field.name)+'</label>');
-              if (field.positionable && field.position != -1) {
+              if (field.positionable && field.isVisible) {
                 $field.append(
                   $('<input type="number" class="'+field.index+' position"></input>')
                   .data('field', field)
@@ -669,7 +703,7 @@ TABS.osd.initialize = function (callback) {
             }
             // draw all the displayed items and the drag and drop preview images
             for(let field of OSD.data.display_items) {
-              if (!field.preview || field.position == -1) { continue; }
+              if (!field.preview || field.isVisible) { continue; }
               var j = (field.position >= 0) ? field.position : field.position + OSD.data.display_size.total;
               // create the preview image
               field.preview_img = new Image();
