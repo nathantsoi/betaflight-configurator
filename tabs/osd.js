@@ -324,7 +324,7 @@ OSD.constants = {
       default_position: 62,
       positionable: true,
       preview: function(osd_data) {
-        return '13.7' + FONT.symbol(osd_data.unit_mode === 0 ? SYM.FEET : SYM.METRE)
+        return '399.7' + FONT.symbol(osd_data.unit_mode === 0 ? SYM.FEET : SYM.METRE)
       }
     },
     ONTIME: {
@@ -343,7 +343,7 @@ OSD.constants = {
       name: 'FLYMODE',
       default_position: -1,
       positionable: true,
-      preview: 'AIR'
+      preview: 'STAB'
     },
     GPS_SPEED: {
       name: 'GPS_SPEED',
@@ -355,7 +355,7 @@ OSD.constants = {
       name: 'GPS_SATS',
       default_position: -1,
       positionable: true,
-      preview: FONT.symbol(SYM.GPS_SAT) + '3'
+      preview: FONT.symbol(SYM.GPS_SAT) + '14'
     }
   }
 };
@@ -461,9 +461,9 @@ OSD.msp = {
       result.push8(OSD.data.unit_mode);
       // watch out, order matters! match the firmware
       result.push8(OSD.data.alarms.rssi.value);
-      result.push16(OSD.data.cap.value);
-      result.push16(OSD.data.time.value);
-      result.push16(OSD.data.alt.value);
+      result.push16(OSD.data.alarms.cap.value);
+      result.push16(OSD.data.alarms.time.value);
+      result.push16(OSD.data.alarms.alt.value);
     }
     return result;
   },
@@ -491,7 +491,12 @@ OSD.msp = {
     d.display_items = [];
     // start at the offset from the other fields
     while (view.offset < view.byteLength) {
-      var v = view.readU16();
+      var v = null;
+      if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
+        v = view.readU16();
+      } else {
+        v = view.read16();
+      }
       var j = d.display_items.length;
       var c = OSD.constants.DISPLAY_FIELDS[j];
       d.display_items.push($.extend({
@@ -507,9 +512,17 @@ OSD.msp = {
 
 OSD.GUI = {};
 OSD.GUI.preview = {
+  onMouseEnter: function() {
+    if (!$(this).data('field')) { return; }
+    $('.field-'+$(this).data('field').index).addClass('mouseover')
+  },
+  onMouseLeave: function() {
+    if (!$(this).data('field')) { return; }
+    $('.field-'+$(this).data('field').index).removeClass('mouseover')
+  },
   onDragStart: function(e) {
     var ev = e.originalEvent;
-    ev.dataTransfer.setData("text/plain", ev.target.id);
+    ev.dataTransfer.setData("text/plain", $(ev.target).data('field').index);
     ev.dataTransfer.setDragImage($(this).data('field').preview_img, 6, 9);
   },
   onDragOver: function(e) {
@@ -527,14 +540,18 @@ OSD.GUI.preview = {
   onDrop: function(e) {
     var ev = e.originalEvent;
     var position = $(this).removeAttr('style').data('position');
-    var field_id = parseInt(ev.dataTransfer.getData('text').split('field-')[1])
+    var field_id = parseInt(ev.dataTransfer.getData('text'))
     var display_item = OSD.data.display_items[field_id];
     var overflows_line = FONT.constants.SIZES.LINE - ((position % FONT.constants.SIZES.LINE) + display_item.preview.length);
     if (overflows_line < 0) {
       position += overflows_line;
     }
-    if (position > OSD.data.display_size.total/2) {
-      position = position - OSD.data.display_size.total;
+    if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
+      // unsigned now
+    } else {
+      if (position > OSD.data.display_size.total/2) {
+        position = position - OSD.data.display_size.total;
+      }
     }
     $('input.'+field_id+'.position').val(position).change();
   },
@@ -649,7 +666,7 @@ TABS.osd.initialize = function (callback) {
               if (!field.name) { continue; }
 
               var checked = field.isVisible ? 'checked' : '';
-              var $field = $('<div class="display-field"/>');
+              var $field = $('<div class="display-field field-'+field.index+'"/>');
               $field.append(
                 $('<input type="checkbox" name="'+field.name+'" class="togglesmall"></input>')
                 .data('field', field)
@@ -669,7 +686,7 @@ TABS.osd.initialize = function (callback) {
                   });
                 })
               );
-              $field.append('<label for="'+field.name+'">'+inflection.titleize(field.name)+'</label>');
+              $field.append('<label for="'+field.name+'" class="char-label">'+inflection.titleize(field.name)+'</label>');
               if (field.positionable && field.isVisible) {
                 $field.append(
                   $('<input type="number" class="'+field.index+' position"></input>')
@@ -692,6 +709,12 @@ TABS.osd.initialize = function (callback) {
             // buffer the preview
             OSD.data.preview = [];
             OSD.data.display_size.total = OSD.data.display_size.x * OSD.data.display_size.y;
+            for(let field of OSD.data.display_items) {
+              // reset fields that somehow end up off the screen
+              if (field.position > OSD.data.display_size.total) {
+                field.position = 0;
+              }
+            }
             // clear the buffer
             for(var i = 0; i < OSD.data.display_size.total; i++) {
               OSD.data.preview.push([null, ' '.charCodeAt(0)]);
@@ -755,13 +778,16 @@ TABS.osd.initialize = function (callback) {
                 var charCode = OSD.data.preview[i][1];
               }
               var $img = $('<div class="char"><img src='+FONT.draw(charCode)+'></img></div>')
+                .on('mouseenter', OSD.GUI.preview.onMouseEnter)
+                .on('mouseleave', OSD.GUI.preview.onMouseLeave)
                 .on('dragover', OSD.GUI.preview.onDragOver)
                 .on('dragleave', OSD.GUI.preview.onDragLeave)
                 .on('drop', OSD.GUI.preview.onDrop)
+                .data('field', field)
                 .data('position', i);
               if (field && field.positionable) {
                 $img
-                  .attr('id', 'field-'+field.index)
+                  .addClass('field-'+field.index)
                   .data('field', field)
                   .prop('draggable', true)
                   .on('dragstart', OSD.GUI.preview.onDragStart);
