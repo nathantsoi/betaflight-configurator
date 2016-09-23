@@ -435,7 +435,7 @@ OSD.msp = {
         if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
           // size * y + x
           display_item.position = FONT.constants.SIZES.LINE * ((bits >> 5) & 0x001F) + (bits & 0x001F);
-          display_item.isVisible = (bits & OSD.constants.VISIBLE);
+          display_item.isVisible = (bits & OSD.constants.VISIBLE) != 0;
         } else {
           display_item.position = (bits === -1) ? c.default_position : bits;
           display_item.isVisible = bits !== -1;
@@ -448,9 +448,9 @@ OSD.msp = {
         var isVisible = display_item.isVisible;
         var position = display_item.position;
         if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
-          return (isVisible ? 0x0800 : 0) & (((position / FONT.constants.SIZES.LINE) & 0x001F) << 5) & (position % FONT.constants.SIZES.LINE);
+          return (isVisible ? 0x0800 : 0) | (((position / FONT.constants.SIZES.LINE) & 0x001F) << 5) | (position % FONT.constants.SIZES.LINE);
         } else {
-          return isVisible ? position : -1;
+          return isVisible ? (position == -1 ? 0 : position): -1;
         }
       }
     }
@@ -458,7 +458,12 @@ OSD.msp = {
   encodeOther: function() {
     var result = [-1, OSD.data.video_system];
     if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
-      result.push(OSD.data.unit_mode);
+      result.push8(OSD.data.unit_mode);
+      // watch out, order matters! match the firmware
+      result.push8(OSD.data.alarms.rssi.value);
+      result.push16(OSD.data.cap.value);
+      result.push16(OSD.data.time.value);
+      result.push16(OSD.data.alt.value);
     }
     return result;
   },
@@ -472,23 +477,21 @@ OSD.msp = {
   decode: function(payload) {
     var view = payload.data;
     var d = OSD.data;
-    var i = 2;
     d.compiled_in = view.readU8();
     d.video_system = view.readU8();
 
     if (semver.gte(CONFIG.flightControllerVersion, "3.0.1")) {
       d.unit_mode = view.readU8();
-      d.alarms = [];
-      d.alarms.push({name: 'rssi', display_name: 'Rssi', value: view.readU8()});
-      d.alarms.push({name: 'cap', display_name: 'Capacity', value: view.readU16()});
-      d.alarms.push({name: 'time', display_name: 'Minutes', value: view.readU16()});
-      d.alarms.push({name: 'alt', display_name: 'Altitude', value: view.readU16()});
-      i += 6;
+      d.alarms = {};
+      d.alarms['rssi'] = { display_name: 'Rssi', value: view.readU8() };
+      d.alarms['cap']= { display_name: 'Capacity', value: view.readU16() };
+      d.alarms['time'] = { display_name: 'Minutes', value: view.readU16() };
+      d.alarms['alt'] = { display_name: 'Altitude', value: view.readU16() };
     }
     d.display_items = [];
     // start at the offset from the other fields
-    for (; i < view.byteLength; i = i + 2) {
-      var v = view.read16();
+    while (view.offset < view.byteLength) {
+      var v = view.readU16();
       var j = d.display_items.length;
       var c = OSD.constants.DISPLAY_FIELDS[j];
       d.display_items.push($.extend({
@@ -629,8 +632,8 @@ TABS.osd.initialize = function (callback) {
               // alarms
               $('.alarms-container').show();
               var $alarms = $('.alarms').empty();
-              for (var i = 0; i < OSD.data.alarms.length; i++) {
-                var alarm = OSD.data.alarms[i];
+              for (let k in OSD.data.alarms) {
+                var alarm = OSD.data.alarms[k];
                 var $input = $('<label/>').append(
                   $('<input name="alarm" type="number"/>'+alarm.display_name+'</label>')
                     .val(alarm.value)
@@ -703,7 +706,7 @@ TABS.osd.initialize = function (callback) {
             }
             // draw all the displayed items and the drag and drop preview images
             for(let field of OSD.data.display_items) {
-              if (!field.preview || field.isVisible) { continue; }
+              if (!field.preview || !field.isVisible) { continue; }
               var j = (field.position >= 0) ? field.position : field.position + OSD.data.display_size.total;
               // create the preview image
               field.preview_img = new Image();
