@@ -453,7 +453,11 @@ TABS.configuration.initialize = function (callback, scrollPosition) {
         }
 
         if (semver.gte(CONFIG.apiVersion, "1.24.0"))  {
-            serialRXtypes.push('SRXL');
+            serialRXtypes.push('Spektrum Bidir SRXL');
+        }
+
+        if (semver.gte(CONFIG.apiVersion, "1.35.0"))  {
+            serialRXtypes.push('TARGET_CUSTOM');
         }
 
         var serialRX_e = $('select.serialRX');
